@@ -3,7 +3,11 @@ package org.jenkinsci.plugins.sonargerrit.inspection.entity;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
+
+import javax.json.bind.annotation.JsonbDateFormat;
 
 /**
  * Project: Sonar-Gerrit Plugin
@@ -60,7 +64,8 @@ public class Issue {
 
     @SuppressWarnings("unused")
     @SuppressFBWarnings ("UWF_UNWRITTEN_FIELD")
-    private Date creationDate;
+    @JsonbDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+    private LocalDateTime creationDate;
 
     public String getKey() {
         return key;
@@ -94,8 +99,44 @@ public class Issue {
         return isNew != null && isNew;
     }
 
-    public Date getCreationDate() {
-        return new Date(creationDate.getTime());
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public void setComponent(String component) {
+        this.component = component;
+    }
+
+    public void setLine(Integer line) {
+        this.line = line;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setSeverity(Severity severity) {
+        this.severity = severity;
+    }
+
+    public void setRule(String rule) {
+        this.rule = rule;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setNew(Boolean aNew) {
+        isNew = aNew;
+    }
+
+    public LocalDateTime getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(LocalDateTime creationDate) {
+        this.creationDate = creationDate;
     }
 
     @Override

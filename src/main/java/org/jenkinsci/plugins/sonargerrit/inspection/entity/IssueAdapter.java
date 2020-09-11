@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.sonargerrit.inspection.entity;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -29,5 +30,5 @@ public interface IssueAdapter {
 
     boolean isNew();
 
-    Date getCreationDate();
+    LocalDateTime getCreationDate();
 }

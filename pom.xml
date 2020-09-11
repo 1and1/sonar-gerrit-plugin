@@ -25,6 +25,7 @@
              ~ hpi-plugin.version: The HPI Maven Plugin version used by the plugin..
              ~ stapler-plugin.version: The Stapler Maven plugin version required by the plugin.
         -->
+        <jersey.version>2.31</jersey.version>
     </properties>
 
     <name>Sonar Gerrit Plugin</name>
@@ -191,6 +192,21 @@
             <groupId>com.urswolfer.gerrit.client.rest</groupId>
             <artifactId>gerrit-rest-java-client</artifactId>
             <version>0.9.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-binding</artifactId>
+            <version>${jersey.version}</version>
         </dependency>
     </dependencies>
 </project>
