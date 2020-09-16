@@ -1,6 +1,8 @@
 package org.jenkinsci.plugins.sonargerrit.inspection.sonarqube;
 
 import com.google.common.collect.Multimap;
+
+import groovy.json.JsonBuilder;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.model.TaskListener;
@@ -8,17 +10,23 @@ import org.jenkinsci.plugins.sonargerrit.TaskListenerLogger;
 import org.jenkinsci.plugins.sonargerrit.config.InspectionConfig;
 import org.jenkinsci.plugins.sonargerrit.config.SubJobConfig;
 import org.jenkinsci.plugins.sonargerrit.inspection.InspectionReportAdapter;
+import org.jenkinsci.plugins.sonargerrit.inspection.entity.Component;
+import org.jenkinsci.plugins.sonargerrit.inspection.entity.Issue;
 import org.jenkinsci.plugins.sonargerrit.inspection.entity.IssueAdapter;
 import org.jenkinsci.plugins.sonargerrit.inspection.entity.Report;
+import org.jenkinsci.plugins.sonargerrit.inspection.entity.Severity;
 import org.jenkinsci.plugins.sonargerrit.util.Localization;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.sonargerrit.util.Localization.getLocalized;
+
+import javax.json.bind.JsonbBuilder;
 
 /**
  * Project: Sonar-Gerrit Plugin
@@ -44,7 +52,9 @@ public class SonarConnector implements InspectionReportAdapter {
             InterruptedException {
         List<ReportInfo> reports = new ArrayList<ReportInfo>();
         for (SubJobConfig subJobConfig : inspectionConfig.getAllSubJobConfigs()) {
-            Report report = readSonarReport(workspace, subJobConfig.getSonarReportPath());
+//            Report report = readSonarReport(workspace, subJobConfig.getSonarReportPath());
+            Report report = createDummyReport();
+
             if (report == null) {  //todo fail all? skip errors?
                 TaskListenerLogger.logMessage(listener, LOGGER, Level.SEVERE, "jenkins.plugin.error.path.no.project.config.available");
                 throw new AbortException(getLocalized("jenkins.plugin.error.path.no.project.config.available"));
@@ -52,6 +62,11 @@ public class SonarConnector implements InspectionReportAdapter {
             reports.add(new ReportInfo(subJobConfig, report));
         }
         report = new InspectionReport(reports);
+    }
+
+    private Report createDummyReport() {
+        Report report = JsonbBuilder.create().fromJson(SonarConnector.class.getResourceAsStream("/res.json"), Report.class);
+        return report;
     }
 
     public Multimap<String, IssueAdapter> getReportData() {

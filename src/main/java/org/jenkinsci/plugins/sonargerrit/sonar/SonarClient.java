@@ -21,12 +21,12 @@ public class SonarClient {
         client.register(basicAuth);
         target = client.target("https://sonarqube-test.mamdev.server.lan").path("api").path("issues").path("search")
                 .queryParam("componentKeys" , "com.unitedinternet.id.testrp:id-testrp")
-                .queryParam("pullRequest" , "10");
+                .queryParam("pullRequest" , "11220");
     }
 
     void fetch() {
-        Report report = target.request(MediaType.APPLICATION_JSON_TYPE).get(Report.class);
-//        String report = target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+//        Report report = target.request(MediaType.APPLICATION_JSON_TYPE).get(Report.class);
+        String report = target.request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
 
         System.out.println(report);
     }
@@ -34,8 +34,8 @@ public class SonarClient {
     public static void main(String[] args) {
         new SonarClient().fetch();
 
-        Report report = new Report();
-        report.setVersion("v1");
-        System.out.println(JsonbBuilder.create().toJson(report));
+//        Report report = new Report();
+//        report.setVersion("v1");
+//        System.out.println(JsonbBuilder.create().toJson(report));
     }
 }
