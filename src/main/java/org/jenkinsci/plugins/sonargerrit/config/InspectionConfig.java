@@ -29,6 +29,10 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
     @Nonnull
     private String serverURL = DescriptorImpl.SONAR_URL;
 
+    private String serverToken;
+    private String pullrequestKey;
+    private String component;
+
     private SubJobConfig baseConfig;
 
     @Nonnull
@@ -125,9 +129,37 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
         return isAutoMatch();
     }
 
+    public String getServerToken() {
+        return serverToken;
+    }
+
+    @DataBoundSetter
+    public void setServerToken(String serverToken) {
+        this.serverToken = serverToken;
+    }
+
+    public String getPullrequestKey() {
+        return pullrequestKey;
+    }
+
+    @DataBoundSetter
+    public void setPullrequestKey(String pullrequestKey) {
+        this.pullrequestKey = pullrequestKey;
+    }
+
+    public String getComponent() {
+        return component;
+    }
+
+    @DataBoundSetter
+    public void setComponent(String component) {
+        this.component = component;
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<InspectionConfig> {
         public static final String SONAR_URL = SonarToGerritPublisher.DescriptorImpl.SONAR_URL;
+        public static final String SONAR_PULLREQUEST_KEY = SonarToGerritPublisher.DescriptorImpl.SONAR_PULLREQUEST_KEY;
         public static final String BASE_TYPE = "base";
         public static final String MULTI_TYPE = "multi";
         public static final String DEFAULT_INSPECTION_CONFIG_TYPE = SonarToGerritPublisher.DescriptorImpl.DEFAULT_INSPECTION_CONFIG_TYPE;

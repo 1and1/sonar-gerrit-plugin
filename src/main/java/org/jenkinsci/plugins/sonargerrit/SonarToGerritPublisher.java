@@ -222,6 +222,8 @@ public class SonarToGerritPublisher extends Publisher implements SimpleBuildStep
         public static final String PROJECT_PATH = "";
         public static final String SONAR_REPORT_PATH = "target/sonar/sonar-report.json";
         public static final String SONAR_URL = "http://localhost:9000";
+        public static final String SONAR_PULLREQUEST_KEY = "${GERRIT_CHANGE_NUMBER}";
+
         public static final String DEFAULT_INSPECTION_CONFIG_TYPE = InspectionConfig.DescriptorImpl.BASE_TYPE;
         public static final boolean AUTO_MATCH_INSPECTION_AND_REVISION_PATHS = false;
 
@@ -240,6 +242,7 @@ public class SonarToGerritPublisher extends Publisher implements SimpleBuildStep
         public static final boolean CHANGED_LINES_ONLY = false;
 
         public static final int DEFAULT_SCORE = 0;
+
 
         /**
          * In order to load the persisted global configuration, you have to

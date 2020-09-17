@@ -15,9 +15,11 @@ import org.jenkinsci.plugins.sonargerrit.inspection.entity.Issue;
 import org.jenkinsci.plugins.sonargerrit.inspection.entity.IssueAdapter;
 import org.jenkinsci.plugins.sonargerrit.inspection.entity.Report;
 import org.jenkinsci.plugins.sonargerrit.inspection.entity.Severity;
+import org.jenkinsci.plugins.sonargerrit.sonar.SonarClient;
 import org.jenkinsci.plugins.sonargerrit.util.Localization;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -53,7 +55,10 @@ public class SonarConnector implements InspectionReportAdapter {
         List<ReportInfo> reports = new ArrayList<ReportInfo>();
         for (SubJobConfig subJobConfig : inspectionConfig.getAllSubJobConfigs()) {
 //            Report report = readSonarReport(workspace, subJobConfig.getSonarReportPath());
-            Report report = createDummyReport();
+//            Report report = createDummyReport();
+
+            SonarClient sonarClient = new SonarClient(inspectionConfig.getServerURL(), inspectionConfig.getServerToken());
+            Report report = sonarClient.fetchIssues(inspectionConfig.getPullrequestKey(), inspectionConfig.getComponent());
 
             if (report == null) {  //todo fail all? skip errors?
                 TaskListenerLogger.logMessage(listener, LOGGER, Level.SEVERE, "jenkins.plugin.error.path.no.project.config.available");

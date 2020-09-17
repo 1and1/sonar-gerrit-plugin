@@ -4,6 +4,18 @@
         <f:textbox default="${descriptor.SONAR_URL}" placeholder="${descriptor.SONAR_URL}"/>
     </f:entry>
 
+    <f:entry title="${%jenkins.plugin.settings.inspection.server.token}" field="serverToken">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%jenkins.plugin.settings.inspection.pullrequest.key}" field="pullrequestKey">
+        <f:textbox default="${descriptor.SONAR_PULLREQUEST_KEY}" />
+    </f:entry>
+
+    <f:entry title="${%jenkins.plugin.settings.inspection.component}" field="component">
+        <f:textbox />
+    </f:entry>
+
     <f:radioBlock name="type"
                   title="${%jenkins.plugin.settings.inspection.base.config}"
                   value="${descriptor.BASE_TYPE}"
