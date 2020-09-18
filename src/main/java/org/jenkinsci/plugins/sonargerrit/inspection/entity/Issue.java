@@ -65,7 +65,7 @@ public class Issue {
     @SuppressWarnings("unused")
     @SuppressFBWarnings ("UWF_UNWRITTEN_FIELD")
     @JsonbDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
-    private LocalDateTime creationDate;
+    private Date creationDate;
 
     public String getKey() {
         return key;
@@ -131,11 +131,15 @@ public class Issue {
         isNew = aNew;
     }
 
-    public LocalDateTime getCreationDate() {
+    public Boolean getNew() {
+        return isNew;
+    }
+
+    public Date getCreationDate() {
         return creationDate;
     }
 
-    public void setCreationDate(LocalDateTime creationDate) {
+    public void setCreationDate(Date creationDate) {
         this.creationDate = creationDate;
     }
 

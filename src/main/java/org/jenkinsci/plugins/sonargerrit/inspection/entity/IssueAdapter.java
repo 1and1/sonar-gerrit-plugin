@@ -30,5 +30,5 @@ public interface IssueAdapter {
 
     boolean isNew();
 
-    LocalDateTime getCreationDate();
+    Date getCreationDate();
 }
