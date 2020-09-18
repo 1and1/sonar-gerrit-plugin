@@ -104,7 +104,7 @@ public class SonarToGerritPublisher extends Publisher implements SimpleBuildStep
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath filePath, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
         //load inspection report
-        SonarConnector sonarConnector = new SonarConnector(listener, inspectionConfig);
+        SonarConnector sonarConnector = new SonarConnector(run, listener, inspectionConfig);
         sonarConnector.readSonarReports(filePath);
 
         //load revision info
