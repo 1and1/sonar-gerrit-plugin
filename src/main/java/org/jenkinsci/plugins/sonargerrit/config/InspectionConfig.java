@@ -6,7 +6,11 @@ import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.plugins.sonar.SonarGlobalConfiguration;
+import hudson.plugins.sonar.SonarInstallation;
 import hudson.util.FormValidation;
+import jenkins.model.GlobalConfiguration;
+
 import org.jenkinsci.plugins.sonargerrit.SonarToGerritPublisher;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -29,7 +33,6 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
     @Nonnull
     private String serverURL = DescriptorImpl.SONAR_URL;
 
-    private String serverToken;
     private String pullrequestKey;
     private String component;
 
@@ -39,6 +42,8 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
     private Collection<SubJobConfig> subJobConfigs;
 
     private String type;
+
+    private String sonarInstallationName;
 
     @DataBoundConstructor
     public InspectionConfig() {
@@ -129,15 +134,6 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
         return isAutoMatch();
     }
 
-    public String getServerToken() {
-        return serverToken;
-    }
-
-    @DataBoundSetter
-    public void setServerToken(String serverToken) {
-        this.serverToken = serverToken;
-    }
-
     public String getPullrequestKey() {
         return pullrequestKey;
     }
@@ -156,16 +152,31 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
         this.component = component;
     }
 
+    public List<SonarInstallation> getSonarInstallations() {
+        SonarGlobalConfiguration sonarGlobalConfiguration = GlobalConfiguration.all().get(SonarGlobalConfiguration.class);
+        return sonarGlobalConfiguration != null ? Arrays.asList(sonarGlobalConfiguration.getInstallations()) : null;
+    }
+
+    @DataBoundSetter
+    public void setSonarInstallationName(String sonarInstallationName) {
+        this.sonarInstallationName = sonarInstallationName;
+    }
+
+    public String getSonarInstallationName() {
+        return sonarInstallationName;
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<InspectionConfig> {
         public static final String SONAR_URL = SonarToGerritPublisher.DescriptorImpl.SONAR_URL;
         public static final String SONAR_PULLREQUEST_KEY = SonarToGerritPublisher.DescriptorImpl.SONAR_PULLREQUEST_KEY;
         public static final String BASE_TYPE = "base";
         public static final String MULTI_TYPE = "multi";
+        public static final String SQ7_TYPE = "sq7";
         public static final String DEFAULT_INSPECTION_CONFIG_TYPE = SonarToGerritPublisher.DescriptorImpl.DEFAULT_INSPECTION_CONFIG_TYPE;
         public static final boolean AUTO_MATCH = SonarToGerritPublisher.DescriptorImpl.AUTO_MATCH_INSPECTION_AND_REVISION_PATHS;
 
-        private static final Set<String> ALLOWED_TYPES = new HashSet<>(Arrays.asList(BASE_TYPE, MULTI_TYPE));
+        private static final Set<String> ALLOWED_TYPES = new HashSet<>(Arrays.asList(BASE_TYPE, MULTI_TYPE, SQ7_TYPE));
 
         /**
          * Performs on-the-fly validation of the form field 'serverURL'.

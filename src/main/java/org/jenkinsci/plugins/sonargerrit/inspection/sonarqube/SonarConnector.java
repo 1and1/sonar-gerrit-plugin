@@ -7,7 +7,6 @@ import hudson.FilePath;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.sonargerrit.TaskListenerLogger;
 import org.jenkinsci.plugins.sonargerrit.config.InspectionConfig;
 import org.jenkinsci.plugins.sonargerrit.config.SubJobConfig;
@@ -26,8 +25,6 @@ import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.sonargerrit.util.Localization.getLocalized;
 
-import javax.json.bind.JsonbBuilder;
-
 /**
  * Project: Sonar-Gerrit Plugin
  * Author:  Tatiana Didik
@@ -39,61 +36,61 @@ public class SonarConnector implements InspectionReportAdapter {
 
     private static final Logger LOGGER = Logger.getLogger(SonarConnector.class.getName());
 
-    private final Run run;
+    private final Run<?, ?> run;
     private final TaskListener listener;
     private final InspectionConfig inspectionConfig;
 
-    private InspectionReport report;
+    private InspectionReport inspectionReport;
 
-    public SonarConnector(Run run, TaskListener listener, InspectionConfig inspectionConfig) {
+    public SonarConnector(Run<?, ?> run, TaskListener listener, InspectionConfig inspectionConfig) {
         this.run = run;
         this.inspectionConfig = inspectionConfig;
         this.listener = listener;
     }
 
-    public void readSonarReports(FilePath workspace) throws IOException,
-            InterruptedException {
+    public void readSonarReports(FilePath workspace) throws IOException, InterruptedException {
         List<ReportInfo> reports = new ArrayList<>();
-        for (SubJobConfig subJobConfig : inspectionConfig.getAllSubJobConfigs()) {
 
-            Report report = null;
+        if (inspectionConfig.isType(InspectionConfig.DescriptorImpl.SQ7_TYPE)) {
+            SonarClient sonarClient = new SonarClient(inspectionConfig.getSonarInstallationName(), run);
+            try {
+                Report report = sonarClient.fetchIssues(
+                        inspectionConfig.getComponent(), TokenMacro.expandAll(run, workspace, listener, inspectionConfig.getPullrequestKey()));
 
-            if (StringUtils.isNotBlank(subJobConfig.getSonarReportPath())) {
-                report = readSonarReport(workspace, subJobConfig.getSonarReportPath());
-            } else {
-                SonarClient sonarClient = new SonarClient(inspectionConfig.getServerURL(), inspectionConfig.getServerToken());
-                try {
-                    report = sonarClient.fetchIssues(
-                            inspectionConfig.getComponent(), TokenMacro.expandAll(run, workspace, listener, inspectionConfig.getPullrequestKey()));
-                } catch (MacroEvaluationException e) {
-                    listener.error(e.getMessage());
+                reports.add(new ReportInfo(null, report)); // todo check why subJobConfig is required
+            } catch (MacroEvaluationException e) {
+                listener.error(e.getMessage());
+            }
+        } else {
+            for (SubJobConfig subJobConfig : inspectionConfig.getAllSubJobConfigs()) {
+                Report report = readSonarReport(workspace, subJobConfig.getSonarReportPath());
+
+                if (report == null) {  //tod fail all? skip errors?
+                    TaskListenerLogger
+                            .logMessage(listener, LOGGER, Level.SEVERE, "jenkins.plugin.error.path.no.project.config.available");
+                    throw new AbortException(getLocalized("jenkins.plugin.error.path.no.project.config.available"));
                 }
+                reports.add(new ReportInfo(subJobConfig, report));
             }
-
-            if (report == null) {  //todo fail all? skip errors?
-                TaskListenerLogger
-                        .logMessage(listener, LOGGER, Level.SEVERE, "jenkins.plugin.error.path.no.project.config.available");
-                throw new AbortException(getLocalized("jenkins.plugin.error.path.no.project.config.available"));
-            }
-            reports.add(new ReportInfo(subJobConfig, report));
         }
-        report = new InspectionReport(reports);
+
+        inspectionReport = new InspectionReport(reports);
     }
 
     public Multimap<String, IssueAdapter> getReportData() {
-        return report.asMultimap(getIssues());
+        return inspectionReport.asMultimap(getIssues());
     }
 
     public Multimap<String, IssueAdapter> getReportData(Iterable<IssueAdapter> issues) {
-        return report.asMultimap(issues);
+        return inspectionReport.asMultimap(issues);
     }
 
     public List<IssueAdapter> getIssues() {
-        return report.getIssuesList();
+        return inspectionReport.getIssuesList();
     }
 
     Report getRawReport(SubJobConfig config) {
-        return report.getRawReport(config);
+        return inspectionReport.getRawReport(config);
     }
 
     private Report readSonarReport(FilePath workspace, String sonarReportPath) throws IOException,
