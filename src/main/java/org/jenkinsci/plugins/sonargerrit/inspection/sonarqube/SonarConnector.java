@@ -1,11 +1,12 @@
 package org.jenkinsci.plugins.sonargerrit.inspection.sonarqube;
 
-import com.google.common.collect.Multimap;
+import static org.jenkinsci.plugins.sonargerrit.util.Localization.getLocalized;
 
-import hudson.AbortException;
-import hudson.FilePath;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.jenkinsci.plugins.sonargerrit.TaskListenerLogger;
 import org.jenkinsci.plugins.sonargerrit.config.InspectionConfig;
@@ -17,13 +18,12 @@ import org.jenkinsci.plugins.sonargerrit.sonar.SonarClient;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.google.common.collect.Multimap;
 
-import static org.jenkinsci.plugins.sonargerrit.util.Localization.getLocalized;
+import hudson.AbortException;
+import hudson.FilePath;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 
 /**
  * Project: Sonar-Gerrit Plugin
@@ -57,9 +57,9 @@ public class SonarConnector implements InspectionReportAdapter {
                 Report report = sonarClient.fetchIssues(
                         inspectionConfig.getComponent(), TokenMacro.expandAll(run, workspace, listener, inspectionConfig.getPullrequestKey()));
 
-                reports.add(new ReportInfo(null, report)); // todo check why subJobConfig is required
+                reports.add(new ReportInfo(new SubJobConfig(), report));
             } catch (MacroEvaluationException e) {
-                listener.error(e.getMessage());
+                throw new AbortException(e.getMessage());
             }
         } else {
             for (SubJobConfig subJobConfig : inspectionConfig.getAllSubJobConfigs()) {
