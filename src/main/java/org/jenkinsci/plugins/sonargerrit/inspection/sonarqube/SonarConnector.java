@@ -8,8 +8,11 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.jenkinsci.plugins.plaincredentials.StringCredentials;
+import org.jenkinsci.plugins.sonargerrit.SonarUtil;
 import org.jenkinsci.plugins.sonargerrit.TaskListenerLogger;
 import org.jenkinsci.plugins.sonargerrit.config.InspectionConfig;
+import org.jenkinsci.plugins.sonargerrit.config.SonarInstallationReader;
 import org.jenkinsci.plugins.sonargerrit.config.SubJobConfig;
 import org.jenkinsci.plugins.sonargerrit.inspection.InspectionReportAdapter;
 import org.jenkinsci.plugins.sonargerrit.inspection.entity.IssueAdapter;
@@ -24,6 +27,7 @@ import hudson.AbortException;
 import hudson.FilePath;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.plugins.sonar.SonarInstallation;
 
 /**
  * Project: Sonar-Gerrit Plugin
@@ -52,11 +56,14 @@ public class SonarConnector implements InspectionReportAdapter {
         List<ReportInfo> reports = new ArrayList<>();
 
         if (inspectionConfig.isType(InspectionConfig.DescriptorImpl.SQ7_TYPE)) {
-            SonarClient sonarClient = new SonarClient(inspectionConfig.getSonarInstallationName(), run);
+            SonarInstallation sonarInstallation = SonarInstallationReader.getSonarInstallation(inspectionConfig.getSonarInstallationName());
+            StringCredentials credentials = sonarInstallation.getCredentials(run);
+
+            SonarClient sonarClient = new SonarClient(sonarInstallation, credentials);
             try {
                 Report report = sonarClient.fetchIssues(
-                        inspectionConfig.getComponent(), TokenMacro.expandAll(run, workspace, listener, inspectionConfig.getPullrequestKey()));
-
+                        SonarUtil.isolateComponentKey(inspectionConfig.getComponent()),
+                        TokenMacro.expandAll(run, workspace, listener, inspectionConfig.getPullrequestKey()));
                 reports.add(new ReportInfo(new SubJobConfig(), report));
             } catch (MacroEvaluationException e) {
                 throw new AbortException(e.getMessage());

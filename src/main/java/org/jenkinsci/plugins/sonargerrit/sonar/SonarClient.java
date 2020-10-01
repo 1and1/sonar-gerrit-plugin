@@ -1,7 +1,5 @@
 package org.jenkinsci.plugins.sonargerrit.sonar;
 
-import java.util.Optional;
-
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
@@ -9,38 +7,28 @@ import javax.ws.rs.core.MediaType;
 
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
-import org.jenkinsci.plugins.sonargerrit.config.SonarInstallationReader;
 import org.jenkinsci.plugins.sonargerrit.inspection.entity.Report;
 
 import hudson.AbortException;
-import hudson.model.Run;
 import hudson.plugins.sonar.SonarInstallation;
 
 public class SonarClient {
     private final String serverUrl;
+
     private final Client client;
 
-    public SonarClient(String sonarInstallationName, Run<?, ?> run) throws AbortException {
-        Optional<SonarInstallation> sonarInstallationOptional = SonarInstallationReader.getSonarInstallation(sonarInstallationName);
+    public SonarClient(SonarInstallation sonarInstallation, StringCredentials credentials) throws AbortException {
+        this.serverUrl = sonarInstallation.getServerUrl();
 
-        if (sonarInstallationOptional.isPresent()) {
-            SonarInstallation sonarInstallation = sonarInstallationOptional.get();
-            this.serverUrl = sonarInstallation.getServerUrl();
-
-            StringCredentials credentials = sonarInstallation.getCredentials(run);
-
-            if (credentials == null) {
-                throw new AbortException("Missing Server authentication token for SonarQube Server " + sonarInstallation
-                        .getName());
-            }
-            String token = credentials.getSecret().getPlainText();
-            HttpAuthenticationFeature basicAuth = HttpAuthenticationFeature.basic(token, "");
-
-            client = ClientBuilder.newClient();
-            client.register(basicAuth);
-        } else {
-            throw new AbortException("SonarQube '" + sonarInstallationName + "' not found -> Add it in Jenkins system configuration - SonarQube servers");
+        if (credentials == null) {
+            throw new AbortException("Missing Server authentication token for SonarQube Server " + sonarInstallation
+                    .getName());
         }
+        String token = credentials.getSecret().getPlainText();
+        HttpAuthenticationFeature basicAuth = HttpAuthenticationFeature.basic(token, "");
+
+        client = ClientBuilder.newClient();
+        client.register(basicAuth);
     }
 
     public Report fetchIssues(String component, String pullrequestKey) {
@@ -49,5 +37,45 @@ public class SonarClient {
                 .queryParam("pullRequest", pullrequestKey);
 
         return target.request(MediaType.APPLICATION_JSON_TYPE).get(Report.class);
+    }
+
+    /**
+     * @see  <a href="https://sonarqube.mamdev.server.lan/web_api/api/components">https://sonarqube.mamdev.server.lan/web_api/api/components</a>
+     *
+     */
+    public ComponentSearchResult fetchComponent(String component) {
+        ComponentSearchResult componentSearchResult = null;
+        Integer total = null;
+
+        for (int currentPage = 1; total == null || currentPage * 500 < total; currentPage++) {
+            ComponentSearchResult pageResult = fetchComponent(component, currentPage);
+            if (componentSearchResult == null) {
+                componentSearchResult = pageResult;
+            } else {
+                componentSearchResult.getComponents().addAll(pageResult.getComponents());
+            }
+            total = pageResult.getPaging().getTotal();
+        }
+
+        return componentSearchResult;
+    }
+
+    private ComponentSearchResult fetchComponent(String component, Integer page) {
+        WebTarget target = client.target(serverUrl).path("api").path("components").path("search")
+                .queryParam("qualifiers", "TRK") // TRK - Projects
+                .queryParam("ps", 500) // page size
+                .queryParam("p", page); // 1-based page number
+
+        if (component != null && !component.isEmpty()) {
+            target = target.queryParam("q", component); // component key
+        }
+
+        ComponentSearchResult componentSearchResult = target.request(MediaType.APPLICATION_JSON_TYPE)
+                .get(ComponentSearchResult.class);
+        return componentSearchResult;
+    }
+
+    public String getServerUrl() {
+        return serverUrl;
     }
 }

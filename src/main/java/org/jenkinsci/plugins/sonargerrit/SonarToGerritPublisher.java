@@ -20,6 +20,7 @@ import org.jenkinsci.plugins.sonargerrit.config.IssueFilterConfig;
 import org.jenkinsci.plugins.sonargerrit.config.NotificationConfig;
 import org.jenkinsci.plugins.sonargerrit.config.ReviewConfig;
 import org.jenkinsci.plugins.sonargerrit.config.ScoreConfig;
+import org.jenkinsci.plugins.sonargerrit.config.SonarInstallationReader;
 import org.jenkinsci.plugins.sonargerrit.config.SubJobConfig;
 import org.jenkinsci.plugins.sonargerrit.filter.IssueFilter;
 import org.jenkinsci.plugins.sonargerrit.inspection.entity.IssueAdapter;
@@ -52,6 +53,7 @@ import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.plugins.sonar.SonarInstallation;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
@@ -160,10 +162,12 @@ public class SonarToGerritPublisher extends Publisher implements SimpleBuildStep
                 TaskListenerLogger.logMessage(listener, LOGGER, Level.INFO, "jenkins.plugin.issues.to.score", file2issuesToScore.entries().size());
             }
 
+            SonarInstallation sonarInstallation = SonarInstallationReader
+                    .getSonarInstallation(inspectionConfig.getSonarInstallationName());
+
             //send review
             ReviewInput reviewInput = new GerritReviewBuilder(file2issuesToComment, file2issuesToScore,
-                    reviewConfig, scoreConfig, notificationConfig, inspectionConfig
-            ).buildReview();
+                    reviewConfig, scoreConfig, notificationConfig, sonarInstallation.getServerUrl()).buildReview();
             revisionInfo.sendReview(reviewInput);
 
             TaskListenerLogger.logMessage(listener, LOGGER, Level.INFO, "jenkins.plugin.review.sent");
