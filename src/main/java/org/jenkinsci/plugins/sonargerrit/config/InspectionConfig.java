@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -240,9 +241,13 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
 
             if (componentSearchResult.getPaging().getTotal() == 1) {
                 Component component = componentSearchResult.getComponents().get(0);
-                return FormValidation.ok(component.getName() + ": " + sonarClient.getServerUrl() + "dashboard?id=" + component.getKey());
+                if (!Objects.equals(componentKey, component.getKey())) {
+                    return FormValidation.error("Ambiguous project key '" + value + "'. Did you mean '" + component.getKey() + "'?");
+                } else {
+                    return FormValidation.ok(component.getName() + ": " + sonarClient.getServerUrl() + "dashboard?id=" + component.getKey());
+                }
             } else if (componentSearchResult.getPaging().getTotal() > 1) {
-                return FormValidation.warning("Multiple results found for '" + componentKey + "' on " + sonarClient.getServerUrl());
+                return FormValidation.error("Multiple results found for '" + componentKey + "' on " + sonarClient.getServerUrl());
             } else {
                 return FormValidation.error("'" + componentKey + "' could not be found on " + sonarClient.getServerUrl());
             }

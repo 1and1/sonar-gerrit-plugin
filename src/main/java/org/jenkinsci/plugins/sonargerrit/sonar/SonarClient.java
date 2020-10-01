@@ -47,7 +47,7 @@ public class SonarClient {
         ComponentSearchResult componentSearchResult = null;
         Integer total = null;
 
-        for (int currentPage = 1; total == null || currentPage * 500 < total; currentPage++) {
+        for (int currentPage = 1; total == null || (currentPage - 1) * 500 < total; currentPage++) {
             ComponentSearchResult pageResult = fetchComponent(component, currentPage);
             if (componentSearchResult == null) {
                 componentSearchResult = pageResult;
