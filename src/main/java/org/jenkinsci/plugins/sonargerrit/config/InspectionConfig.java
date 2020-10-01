@@ -1,9 +1,5 @@
 package org.jenkinsci.plugins.sonargerrit.config;
 
-import static org.jenkinsci.plugins.sonargerrit.util.Localization.getLocalized;
-
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,19 +12,15 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
-import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.jenkinsci.plugins.sonargerrit.SonarToGerritPublisher;
-import org.jenkinsci.plugins.sonargerrit.SonarUtil;
-import org.jenkinsci.plugins.sonargerrit.sonar.Component;
-import org.jenkinsci.plugins.sonargerrit.sonar.ComponentSearchResult;
 import org.jenkinsci.plugins.sonargerrit.sonar.SonarClient;
+import org.jenkinsci.plugins.sonargerrit.sonar.SonarUtil;
+import org.jenkinsci.plugins.sonargerrit.sonar.dto.Component;
+import org.jenkinsci.plugins.sonargerrit.sonar.dto.ComponentSearchResult;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.common.base.MoreObjects;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -37,10 +29,8 @@ import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
-import hudson.model.ItemGroup;
 import hudson.plugins.sonar.SonarGlobalConfiguration;
 import hudson.plugins.sonar.SonarInstallation;
-import hudson.security.ACL;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
@@ -144,7 +134,7 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
 
     @DataBoundSetter
     public void setSubJobConfigs(Collection<SubJobConfig> subJobConfigs) {
-        if (subJobConfigs != null && subJobConfigs.size() > 0) {
+        if (subJobConfigs != null && !subJobConfigs.isEmpty()) {
             this.subJobConfigs = new LinkedList<>(subJobConfigs);
         } else {
             this.subJobConfigs = new LinkedList<>();
@@ -200,33 +190,10 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
 
         private static final Set<String> ALLOWED_TYPES = new HashSet<>(Arrays.asList(BASE_TYPE, MULTI_TYPE, SQ7_TYPE));
 
-        /**
-         * Performs on-the-fly validation of the form field 'serverURL'.
-         *
-         * @param value This parameter receives the value that the user has typed.
-         *
-         * @return Indicates the outcome of the validation. This is sent to the browser.
-         * <p>
-         * Note that returning {@link FormValidation#error(String)} does not
-         * prevent the form from being saved. It just means that a message
-         * will be displayed to the user.
-         */
-        @SuppressWarnings(value = "unused")
-        public FormValidation doCheckServerURL(@QueryParameter String value) {
-            if (Util.fixEmptyAndTrim(value) == null) {
-                return FormValidation.warning(getLocalized("jenkins.plugin.error.sonar.url.empty"));
-            }
-            try {
-                new URL(value);
-            } catch (MalformedURLException e) {
-                return FormValidation.warning(getLocalized("jenkins.plugin.error.sonar.url.invalid"));
-            }
-            return FormValidation.ok();
-        }
-
         /** Is only called once, filtering is done in Frontend by Combo Box */
+        @SuppressWarnings("unused")
         public ComboBoxModel doFillComponentItems(@QueryParameter String value, @QueryParameter String sonarInstallationName) throws AbortException {
-            SonarClient sonarClient = getSonarClient(sonarInstallationName);
+            SonarClient sonarClient = SonarUtil.getSonarClient(sonarInstallationName);
             ComponentSearchResult componentSearchResult = sonarClient.fetchComponent(value);
 
             return new ComboBoxModel(componentSearchResult.getComponents().stream()
@@ -234,8 +201,9 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
                     .collect(Collectors.toList()));
         }
 
+        @SuppressWarnings("unused")
         public FormValidation doCheckComponent(@QueryParameter String value, @QueryParameter String sonarInstallationName) throws AbortException {
-            SonarClient sonarClient = getSonarClient(sonarInstallationName);
+            SonarClient sonarClient = SonarUtil.getSonarClient(sonarInstallationName);
             String componentKey = SonarUtil.isolateComponentKey(value);
             ComponentSearchResult componentSearchResult = sonarClient.fetchComponent(componentKey);
 
@@ -251,30 +219,6 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
             } else {
                 return FormValidation.error("'" + componentKey + "' could not be found on " + sonarClient.getServerUrl());
             }
-        }
-
-        /**
-         * Possible pattern: Name (key) or key
-         *
-         * @return key
-         */
-        private SonarClient getSonarClient(String sonarInstallationName) throws AbortException {
-            SonarInstallation sonarInstallation = SonarInstallationReader.getSonarInstallation(sonarInstallationName);
-            List<StringCredentials> stringCredentials = CredentialsProvider.lookupCredentials(
-                    StringCredentials.class,
-                    (ItemGroup) null,
-                    ACL.SYSTEM,
-                    (DomainRequirement) null
-            );
-            StringCredentials credentials = CredentialsMatchers.firstOrNull(
-                    stringCredentials,
-                    CredentialsMatchers.withId(sonarInstallation.getCredentialsId())
-            );
-
-            if (credentials == null) {
-                throw new IllegalStateException("Missing Server authentication token for SonarQube Server " + sonarInstallation.getName());
-            }
-            return new SonarClient(sonarInstallation, credentials);
         }
 
         @Override

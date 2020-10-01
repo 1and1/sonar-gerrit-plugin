@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.sonargerrit.sonar;
+package org.jenkinsci.plugins.sonargerrit.sonar.dto;
 
 public class Component {
     private String name;

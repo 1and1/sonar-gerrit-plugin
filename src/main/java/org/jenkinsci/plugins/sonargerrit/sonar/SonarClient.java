@@ -8,6 +8,7 @@ import javax.ws.rs.core.MediaType;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.jenkinsci.plugins.sonargerrit.inspection.entity.Report;
+import org.jenkinsci.plugins.sonargerrit.sonar.dto.ComponentSearchResult;
 
 import hudson.AbortException;
 import hudson.plugins.sonar.SonarInstallation;
@@ -21,8 +22,7 @@ public class SonarClient {
         this.serverUrl = sonarInstallation.getServerUrl();
 
         if (credentials == null) {
-            throw new AbortException("Missing Server authentication token for SonarQube Server " + sonarInstallation
-                    .getName());
+            throw new AbortException("Missing Server authentication token for SonarQube Server " + sonarInstallation.getName());
         }
         String token = credentials.getSecret().getPlainText();
         HttpAuthenticationFeature basicAuth = HttpAuthenticationFeature.basic(token, "");
@@ -51,10 +51,10 @@ public class SonarClient {
             ComponentSearchResult pageResult = fetchComponent(component, currentPage);
             if (componentSearchResult == null) {
                 componentSearchResult = pageResult;
+                total = pageResult.getPaging().getTotal();
             } else {
                 componentSearchResult.getComponents().addAll(pageResult.getComponents());
             }
-            total = pageResult.getPaging().getTotal();
         }
 
         return componentSearchResult;
@@ -70,9 +70,7 @@ public class SonarClient {
             target = target.queryParam("q", component); // component key
         }
 
-        ComponentSearchResult componentSearchResult = target.request(MediaType.APPLICATION_JSON_TYPE)
-                .get(ComponentSearchResult.class);
-        return componentSearchResult;
+        return target.request(MediaType.APPLICATION_JSON_TYPE).get(ComponentSearchResult.class);
     }
 
     public String getServerUrl() {

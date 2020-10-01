@@ -9,7 +9,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
-import org.jenkinsci.plugins.sonargerrit.SonarUtil;
 import org.jenkinsci.plugins.sonargerrit.TaskListenerLogger;
 import org.jenkinsci.plugins.sonargerrit.config.InspectionConfig;
 import org.jenkinsci.plugins.sonargerrit.config.SonarInstallationReader;
@@ -18,6 +17,7 @@ import org.jenkinsci.plugins.sonargerrit.inspection.InspectionReportAdapter;
 import org.jenkinsci.plugins.sonargerrit.inspection.entity.IssueAdapter;
 import org.jenkinsci.plugins.sonargerrit.inspection.entity.Report;
 import org.jenkinsci.plugins.sonargerrit.sonar.SonarClient;
+import org.jenkinsci.plugins.sonargerrit.sonar.SonarUtil;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 
