@@ -1,13 +1,10 @@
 package org.jenkinsci.plugins.sonargerrit.inspection.entity;
 
+import javax.json.bind.annotation.JsonbDateFormat;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
-import javax.json.bind.annotation.JsonbDateFormat;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Project: Sonar-Gerrit Plugin
@@ -136,11 +133,11 @@ public class Issue {
     }
 
     public Date getCreationDate() {
-        return creationDate;
+        return new Date(creationDate.getTime());
     }
 
     public void setCreationDate(Date creationDate) {
-        this.creationDate = creationDate;
+        this.creationDate = new Date(creationDate.getTime());
     }
 
     @Override
