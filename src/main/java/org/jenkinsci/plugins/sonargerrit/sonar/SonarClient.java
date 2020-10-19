@@ -10,10 +10,14 @@ import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.jenkinsci.plugins.sonargerrit.inspection.entity.Report;
 import org.jenkinsci.plugins.sonargerrit.sonar.dto.ComponentSearchResult;
 
+import java.util.logging.Logger;
+
 import hudson.AbortException;
 import hudson.plugins.sonar.SonarInstallation;
 
 public class SonarClient {
+    private static final Logger LOGGER = Logger.getLogger(SonarClient.class.getName());
+
     private final String serverUrl;
 
     private final Client client;
@@ -36,7 +40,15 @@ public class SonarClient {
                 .queryParam("componentKeys", component)
                 .queryParam("pullRequest", pullrequestKey);
 
-        return target.request(MediaType.APPLICATION_JSON_TYPE).get(Report.class);
+        LOGGER.info(() -> "Fetch issues from " + target.toString());
+
+        Report report = target.request(MediaType.APPLICATION_JSON_TYPE).get(Report.class);
+        // Pull Request Analysis only reports new issues, attribute is not present in JSON response
+        report.getIssues().forEach(issue -> issue.setNew(true));
+
+        LOGGER.info(() -> "Report has " + report.getIssues().size() + " issues.");
+
+        return report;
     }
 
     /**
