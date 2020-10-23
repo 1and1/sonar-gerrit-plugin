@@ -2,12 +2,6 @@ package org.jenkinsci.plugins.sonargerrit.inspection.sonarqube;
 
 import static org.jenkinsci.plugins.sonargerrit.util.Localization.getLocalized;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.jenkinsci.plugins.sonargerrit.TaskListenerLogger;
 import org.jenkinsci.plugins.sonargerrit.config.InspectionConfig;
@@ -20,6 +14,12 @@ import org.jenkinsci.plugins.sonargerrit.sonar.SonarClient;
 import org.jenkinsci.plugins.sonargerrit.sonar.SonarUtil;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.google.common.collect.Multimap;
 
@@ -55,7 +55,7 @@ public class SonarConnector implements InspectionReportAdapter {
     public void readSonarReports(FilePath workspace) throws IOException, InterruptedException {
         List<ReportInfo> reports = new ArrayList<>();
 
-        if (inspectionConfig.isType(InspectionConfig.DescriptorImpl.SQ7_TYPE)) {
+        if (inspectionConfig.getAnalysisType() == InspectionConfig.DescriptorImpl.AnalysisType.PULL_REQUEST) {
             SonarInstallation sonarInstallation = SonarInstallationReader.getSonarInstallation(inspectionConfig.getSonarInstallationName());
             StringCredentials credentials = sonarInstallation.getCredentials(run);
 

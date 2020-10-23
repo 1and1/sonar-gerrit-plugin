@@ -1,14 +1,6 @@
 package org.jenkinsci.plugins.sonargerrit.config;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
+import static org.jenkinsci.plugins.sonargerrit.util.Localization.getLocalized;
 
 import javax.annotation.Nonnull;
 
@@ -20,6 +12,18 @@ import org.jenkinsci.plugins.sonargerrit.sonar.dto.ComponentSearchResult;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
 
@@ -43,6 +47,8 @@ import jenkins.model.GlobalConfiguration;
  */
 public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> {
     @Nonnull
+    private DescriptorImpl.AnalysisType analysisType = DescriptorImpl.AnalysisType.PREVIEW_MODE;
+
     private String serverURL = DescriptorImpl.SONAR_URL;
 
     private String pullrequestKey;
@@ -63,7 +69,7 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
     }
 
     @SuppressFBWarnings(value="NP_NONNULL_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR") // subJobConfigs is initialized in setter
-    private InspectionConfig(@Nonnull String serverURL, SubJobConfig baseConfig, List<SubJobConfig> subJobConfigs, String type) {
+    private InspectionConfig(String serverURL, SubJobConfig baseConfig, List<SubJobConfig> subJobConfigs, String type) {
         setServerURL(serverURL);
         setBaseConfig(baseConfig);
         setSubJobConfigs(subJobConfigs);
@@ -75,13 +81,12 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
         return new DescriptorImpl();
     }
 
-    @Nonnull
     public String getServerURL() {
         return serverURL;
     }
 
     @DataBoundSetter
-    public void setServerURL(@Nonnull String serverURL) {
+    public void setServerURL(String serverURL) {
         this.serverURL = MoreObjects.firstNonNull(Util.fixEmptyAndTrim(serverURL), DescriptorImpl.SONAR_URL);
     }
 
@@ -115,6 +120,15 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
 
     public String getType() {
         return type;
+    }
+
+    public DescriptorImpl.AnalysisType getAnalysisType() {
+        return analysisType;
+    }
+
+    @DataBoundSetter
+    public void setAnalysisType(DescriptorImpl.AnalysisType analysisType) {
+        this.analysisType = analysisType;
     }
 
     public boolean isMultiConfigMode() {
@@ -180,15 +194,36 @@ public class InspectionConfig extends AbstractDescribableImpl<InspectionConfig> 
 
     @Extension
     public static class DescriptorImpl extends Descriptor<InspectionConfig> {
+        public enum AnalysisType {
+            PREVIEW_MODE,
+            PULL_REQUEST
+        }
+
+        public static final String ANALYSIS_TYPE_PREVIEW_MODE = AnalysisType.PREVIEW_MODE.name();
+        public static final String ANALYSIS_TYPE_PULL_REQUEST = AnalysisType.PULL_REQUEST.name();
+
         public static final String SONAR_URL = SonarToGerritPublisher.DescriptorImpl.SONAR_URL;
         public static final String SONAR_PULLREQUEST_KEY = SonarToGerritPublisher.DescriptorImpl.SONAR_PULLREQUEST_KEY;
         public static final String BASE_TYPE = "base";
         public static final String MULTI_TYPE = "multi";
-        public static final String SQ7_TYPE = "sq7";
         public static final String DEFAULT_INSPECTION_CONFIG_TYPE = SonarToGerritPublisher.DescriptorImpl.DEFAULT_INSPECTION_CONFIG_TYPE;
         public static final boolean AUTO_MATCH = SonarToGerritPublisher.DescriptorImpl.AUTO_MATCH_INSPECTION_AND_REVISION_PATHS;
 
-        private static final Set<String> ALLOWED_TYPES = new HashSet<>(Arrays.asList(BASE_TYPE, MULTI_TYPE, SQ7_TYPE));
+        private static final Set<String> ALLOWED_TYPES = new HashSet<>(Arrays.asList(BASE_TYPE, MULTI_TYPE));
+
+        @SuppressWarnings(value = "unused")
+        public FormValidation doCheckServerURL(@QueryParameter String value) {
+            if (Util.fixEmptyAndTrim(value) == null) {
+                return FormValidation.warning(getLocalized("jenkins.plugin.error.sonar.url.empty"));
+            }
+            try {
+                new URL(value);
+            } catch (MalformedURLException e) {
+                return FormValidation.warning(getLocalized("jenkins.plugin.error.sonar.url.invalid"));
+            }
+            return FormValidation.ok();
+
+        }
 
         /** Is only called once, filtering is done in Frontend by Combo Box */
         @SuppressWarnings("unused")
