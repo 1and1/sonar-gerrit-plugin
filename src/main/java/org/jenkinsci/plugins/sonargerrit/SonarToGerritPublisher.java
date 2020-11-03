@@ -2,15 +2,6 @@ package org.jenkinsci.plugins.sonargerrit;
 
 import static org.jenkinsci.plugins.sonargerrit.util.Localization.getLocalized;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import javax.annotation.Nonnull;
 
 import org.jenkinsci.Symbol;
@@ -35,6 +26,15 @@ import org.jenkinsci.plugins.sonargerrit.util.BackCompatibilityHelper;
 import org.jenkinsci.plugins.sonargerrit.util.Localization;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.Multimap;
@@ -162,12 +162,18 @@ public class SonarToGerritPublisher extends Publisher implements SimpleBuildStep
                 TaskListenerLogger.logMessage(listener, LOGGER, Level.INFO, "jenkins.plugin.issues.to.score", file2issuesToScore.entries().size());
             }
 
-            SonarInstallation sonarInstallation = SonarInstallationReader
-                    .getSonarInstallation(inspectionConfig.getSonarInstallationName());
+            String serverUrl;
+            if (inspectionConfig.getAnalysisType() == InspectionConfig.DescriptorImpl.AnalysisType.PREVIEW_MODE) {
+                serverUrl = inspectionConfig.getServerURL();
+            } else {
+                SonarInstallation sonarInstallation = SonarInstallationReader
+                        .getSonarInstallation(inspectionConfig.getSonarInstallationName());
+                serverUrl = sonarInstallation.getServerUrl();
+            }
 
             //send review
             ReviewInput reviewInput = new GerritReviewBuilder(file2issuesToComment, file2issuesToScore,
-                    reviewConfig, scoreConfig, notificationConfig, sonarInstallation.getServerUrl()).buildReview();
+                    reviewConfig, scoreConfig, notificationConfig, serverUrl).buildReview();
             revisionInfo.sendReview(reviewInput);
 
             TaskListenerLogger.logMessage(listener, LOGGER, Level.INFO, "jenkins.plugin.review.sent");
