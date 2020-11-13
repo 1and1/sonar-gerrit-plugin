@@ -61,6 +61,9 @@ public class SonarConnector implements InspectionReportAdapter {
 
             SonarClient sonarClient = new SonarClient(sonarInstallation, credentials);
             try {
+                LOGGER.info("Sonar report processing can take some time, so wait 5 seconds ...");
+                Thread.sleep(5000);
+
                 Report report = sonarClient.fetchIssues(
                         SonarUtil.isolateComponentKey(inspectionConfig.getComponent()),
                         TokenMacro.expandAll(run, workspace, listener, inspectionConfig.getPullrequestKey()));
